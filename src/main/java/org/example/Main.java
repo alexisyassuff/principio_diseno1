@@ -1,117 +1,59 @@
-
 package org.example;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
+
+import org.example.DependencyInersionPrinciple.MessageService;
+import org.example.DependencyInersionPrinciple.Notification;
+import org.example.DependencyInersionPrinciple.SMSService;
+import org.example.DependencyInersionPrinciple.TikTokService;
+import org.example.DependencyInersionPrinciple.EmailService;
+import org.example.InterfaceSegregationPrinciple.Barista;
+import org.example.InterfaceSegregationPrinciple.Mesero;
+import org.example.InterfaceSegregationPrinciple.CoffeeMaker;
+import org.example.InterfaceSegregationPrinciple.Cleaner;
+import org.example.SingleResponsability.Product;
+import org.example.SingleResponsability.ProductRepository;
+
+
 
 public class Main {
     public static void main(String[] args) {
-        EntityManagerFactory emf = Persistence.createEntityManagerFactory("example-unit");
+        // Ejemplo de Single Responsibility Principle (SRP)
 
-        EntityManager em = emf.createEntityManager();
-        System.out.println("en marcha Alberto");
+        // Crear un producto
+        Product product = new Product("Laptop", 799.99);
 
-        try {
-            // Persistir una nueva entidad Person
-            em.getTransaction().begin();
+        // Crear instancia del repositorio
+        ProductRepository repository = new ProductRepository();
 
-            Persona persona = Persona.builder()
-                    .edad(7)
-                    .nombre("Sarli").
+        // Guardar el producto en la base de datos
+        repository.saveToDatabase(product);
 
-                    build();
+        // Cargar un producto desde la base de datos
+        Product loadedProduct = repository.loadFromDatabase("Laptop");
+        System.out.println("Producto cargado: " + loadedProduct.getName() + ", Precio: $" + loadedProduct.getPrice());
 
-;
+        // Ejemplo de Interface Segregation Principle (ISP)
 
-            System.out.println("IMPRIMO PERSONA ANTES  DE GRABAR");
-            System.out.println("--------------------");
-            System.out.println(persona);
+        CoffeeMaker barista = new Barista();
+        Cleaner mesero = new Mesero();
 
-            em.persist(persona);
-
-           em.getTransaction().commit();
-
-           // Cuando hace el commit pasa a estado manejado y posee un id
-
-            System.out.println("IMPRIMO PERSONA LUEGO DE GRABAR");
-
-            System.out.println(persona);
+        barista.makeCoffee();  // El barista prepara el café
+        mesero.cleanTable();   // El mesero limpia la mesa
 
 
+        // Inyectamos una implementación concreta (SMSService) usando DIP
+        MessageService smsService = new SMSService();
+        Notification notification = new Notification(smsService);
+        notification.send("¡Hola, este es un SMS!");
 
+        // Cambiamos la implementación a EmailService
+        MessageService emailService = new EmailService();
+        notification = new Notification(emailService);
+        notification.send("¡Hola, este es un correo electrónico!");
 
-
-
-            // Actualizar la persona
-            em.getTransaction().begin();
-           persona.setEdad(979);
-            persona.setNombre("Alejandro");
-            em.merge(persona);
-            em.getTransaction().commit();
-
-            // Buscar la persona por ID
-               Persona personaEncontrada = em.find(Persona.class, persona.getId());
-
-            System.out.println("Persona encontrada: " + personaEncontrada);
-
-
-            // Desconectar la entidad (estado Detached)
-         em.getTransaction().begin();
-          em.detach(persona);
-           em.getTransaction().commit();
-
-            System.out.println("Voy a eliminar persona que ya no está vinculada");
-            // Eliminar la persona
-              em.getTransaction().begin();
-              em.remove(persona);
-              em.getTransaction().commit();
-
-
-           System.out.println("Me tiene que dar error");
-            //Buscar la persona por ID
-            Persona personaEncontrada1 = em.find(Persona.class, persona.getId());
-
-            System.out.println("Persona encontrada desde la base de datos: " + personaEncontrada1);
-
-
-
-
-            // Eliminar la persona
-       //     em.getTransaction().begin();
-       //     em.remove(personaEncontrada);
-       //     em.getTransaction().commit();
-
-
-        }catch (Exception e){
-
-            em.getTransaction().rollback();
-            System.out.println(e.getMessage());
-            System.out.println("Salí por el catch");}
-
-        // Cerrar el EntityManager y el EntityManagerFactory
-        em.close();
-        emf.close();
+        // Cambiamos la implementación a TikTokService
+        MessageService tiktokService = new TikTokService();
+        notification = new Notification(tiktokService);
+        notification.send("¡Hola, este es un mensaje de TikTok!");
     }
 }
-
-/*
-
-Manejo del Ciclo de Estados en JPA
-El ciclo de estados en JPA (Java Persistence API) define los diferentes estados que puede tener una entidad en relación con el contexto de persistencia (EntityManager). Comprender y manejar correctamente estos estados es crucial para trabajar eficazmente con JPA. Los estados del ciclo de vida de una entidad en JPA son:
-
-New (Nuevo):
-
-Una entidad está en estado "New" cuando ha sido creada pero aún no ha sido persistida en la base de datos.
-Managed (Gestionado):
-
-Una entidad está en estado "Managed" cuando está asociada con un contexto de persistencia (EntityManager) y cualquier cambio en la entidad se reflejará automáticamente en la base de datos.
-Detached (Desconectado):
-
-Una entidad está en estado "Detached" cuando ya no está asociada con un contexto de persistencia. Los cambios en la entidad no se reflejarán automáticamente en la base de datos.
-Removed (Eliminado):
-
-Una entidad está en estado "Removed" cuando ha sido marcada para su eliminación en la base de datos.
-*/
-
-
